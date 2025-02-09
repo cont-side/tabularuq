@@ -1,0 +1,10 @@
+edition = "2018"
+max_width = 100
+use_small_heuristics = "Max"
+struct_field_align_threshold = 0
+format_strings = true
+reorder_imports = true
+normalize_doc_attributes = true
+hard_tabs = false
+tab_spaces = 4
+newline_style = "Unix"
