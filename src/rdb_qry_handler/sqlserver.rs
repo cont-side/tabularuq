@@ -1,9 +1,7 @@
 use chrono::{DateTime, Duration};
 use futures::stream::TryStreamExt;
 use serde::Deserialize;
-use tiberius::{
-    AuthMethod, Client, ColumnData, ColumnType, Config, Query, QueryItem, ResultMetadata, Row,
-};
+use tiberius::{AuthMethod, Client, ColumnData, Config, Query, QueryItem, ResultMetadata, Row};
 use tokio::net::TcpStream;
 use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 
@@ -57,13 +55,22 @@ impl QueryHandler for SqlServerHandler {
         }
         let mut stream = select.query(client).await?;
 
+        let mut column_meta = None;
         let mut records = Vec::new();
         while let Some(item) = stream.try_next().await? {
-            let record = DataRecord::from(item);
-            records.push(record);
+            match item {
+                QueryItem::Metadata(meta) => {
+                    let col_meta = SqlServerHandler::col_meta(Some(&meta));
+                    column_meta = col_meta;
+                }
+                QueryItem::Row(row) => {
+                    let record = row.into_data_record();
+                    records.push(record);
+                }
+            }
         }
 
-        Result::Ok(DataRows { column_meta: Option::None, records })
+        Result::Ok(DataRows { column_meta, records })
     }
 
     async fn mutate(
@@ -153,30 +160,8 @@ impl SqlServerHandler {
             _ => {}
         }
     }
-}
 
-impl From<QueryItem> for DataRecord {
-    fn from(item: QueryItem) -> Self {
-        let meta = item.as_metadata();
-        let _col_meta = DataRecord::col_meta(meta);
-
-        if let Some(row) = item.into_row() {
-            row.into_data_record()
-        } else {
-            DataRecord { cells: Vec::new() }
-        }
-    }
-}
-
-impl IntoDataRecord for Row {
-    fn into_data_record(self) -> DataRecord {
-        let cells = self.into_iter().map(DataRecord::col_to_cell).collect();
-        DataRecord { cells }
-    }
-}
-
-impl DataRecord {
-    fn col_meta(meta: Option<&ResultMetadata>) -> Option<Vec<ColumnType>> {
+    fn col_meta(meta: Option<&ResultMetadata>) -> Option<Vec<String>> {
         let columns = if let Some(meta) = meta {
             let columns = meta.columns();
             Some(columns)
@@ -186,7 +171,7 @@ impl DataRecord {
 
         let mut col_type = Vec::new();
         for col in columns? {
-            col_type.push(col.to_owned().column_type());
+            col_type.push(col.to_owned().name().to_string());
         }
 
         Some(col_type)
@@ -224,6 +209,13 @@ impl DataRecord {
                 None
             }
         }
+    }
+}
+
+impl IntoDataRecord for Row {
+    fn into_data_record(self) -> DataRecord {
+        let cells = self.into_iter().map(SqlServerHandler::col_to_cell).collect();
+        DataRecord { cells }
     }
 }
 
