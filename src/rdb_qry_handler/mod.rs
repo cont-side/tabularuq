@@ -74,11 +74,14 @@ pub trait QueryHandler {
 
     fn connect(&mut self) -> impl Future<Output = Result<(), Box<dyn std::error::Error>>> + Send;
 
-    fn query(
+    fn query<F>(
         &mut self,
         query: &str,
         bind_variables: Option<&[DataType]>,
-    ) -> impl Future<Output = Result<DataRows, Box<dyn std::error::Error>>> + Send;
+        fetch_controller: Option<F>,
+    ) -> impl Future<Output = Result<DataRows, Box<dyn std::error::Error>>> + Send
+    where
+        F: Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send;
 
     fn mutate(
         &mut self,

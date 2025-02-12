@@ -11,6 +11,25 @@ use crate::rdb_qry_handler::{
 
 use super::error::QueryHandleError;
 
+trait IntoMetaRecord {
+    fn into_meta_rec(self) -> (Option<Vec<String>>, Option<DataRecord>);
+}
+
+impl IntoMetaRecord for QueryItem {
+    fn into_meta_rec(self) -> (Option<Vec<String>>, Option<DataRecord>) {
+        match self {
+            QueryItem::Metadata(meta) => {
+                let col_meta = SqlServerHandler::col_meta(Some(&meta));
+                (col_meta, Option::None)
+            }
+            QueryItem::Row(row) => {
+                let record = row.into_data_record();
+                (Option::None, Option::Some(record))
+            }
+        }
+    }
+}
+
 pub struct SqlServerHandler {
     conn_config: SqlServerConnectionConfig,
     client: Option<Client<Compat<TcpStream>>>,
@@ -37,11 +56,15 @@ impl QueryHandler for SqlServerHandler {
         Result::Ok(())
     }
 
-    async fn query(
+    async fn query<F>(
         &mut self,
         query: &str,
         bind_variables: Option<&[DataType]>,
-    ) -> Result<DataRows, Box<dyn std::error::Error>> {
+        fetch_controller: Option<F>,
+    ) -> Result<DataRows, Box<dyn std::error::Error>>
+    where
+        F: Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send,
+    {
         let client = self
             .client
             .as_mut()
@@ -58,15 +81,23 @@ impl QueryHandler for SqlServerHandler {
         let mut column_meta = None;
         let mut records = Vec::new();
         while let Some(item) = stream.try_next().await? {
-            match item {
-                QueryItem::Metadata(meta) => {
-                    let col_meta = SqlServerHandler::col_meta(Some(&meta));
-                    column_meta = col_meta;
-                }
-                QueryItem::Row(row) => {
-                    let record = row.into_data_record();
-                    records.push(record);
-                }
+            let (col_meta, record) = item.into_meta_rec();
+
+            let need_to_continue = if let Some(determine_continue) = fetch_controller.as_ref() {
+                determine_continue(col_meta.as_ref().map(|val| val.as_slice()), record.as_ref())
+            } else {
+                true
+            };
+
+            if col_meta.is_some() {
+                column_meta = col_meta;
+            }
+            if let Some(record) = record {
+                records.push(record);
+            }
+
+            if !need_to_continue {
+                break;
             }
         }
 
