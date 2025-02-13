@@ -78,7 +78,7 @@ pub trait QueryHandler {
         &mut self,
         query: &str,
         bind_variables: Option<&[DataType]>,
-        fetch_controller: Option<F>,
+        fetch_more: F,
     ) -> impl Future<Output = Result<DataRows, Box<dyn std::error::Error>>> + Send
     where
         F: Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send;
@@ -90,6 +90,10 @@ pub trait QueryHandler {
     ) -> impl Future<Output = Result<impl QueryResult, Box<dyn std::error::Error>>> + Send;
 
     fn close(self) -> impl Future<Output = Result<(), Box<dyn std::error::Error>>> + Send;
+
+    fn default_fetch_more() -> impl Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send {
+        |_, _| true
+    }
 }
 
 #[derive(Deserialize)]
