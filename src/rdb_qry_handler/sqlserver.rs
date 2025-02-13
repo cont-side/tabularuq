@@ -60,7 +60,7 @@ impl QueryHandler for SqlServerHandler {
         &mut self,
         query: &str,
         bind_variables: Option<&[DataType]>,
-        fetch_controller: Option<F>,
+        fetch_more: F,
     ) -> Result<DataRows, Box<dyn std::error::Error>>
     where
         F: Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send,
@@ -83,11 +83,8 @@ impl QueryHandler for SqlServerHandler {
         while let Some(item) = stream.try_next().await? {
             let (col_meta, record) = item.into_meta_rec();
 
-            let need_to_continue = if let Some(determine_continue) = fetch_controller.as_ref() {
-                determine_continue(col_meta.as_ref().map(|val| val.as_slice()), record.as_ref())
-            } else {
-                true
-            };
+            let need_to_continue =
+                fetch_more(col_meta.as_ref().map(|value| value.as_slice()), record.as_ref());
 
             if col_meta.is_some() {
                 column_meta = col_meta;
