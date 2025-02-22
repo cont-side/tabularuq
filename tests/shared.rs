@@ -1,5 +1,5 @@
 use mockall::mock;
-use std::future::Future;
+use std::{future::Future, sync::Arc};
 use tabularuq::rdb_qry_handler::*;
 
 mock! {
@@ -23,10 +23,11 @@ mock! {
 
         async fn connect(&mut self) -> Result<(), Box<dyn std::error::Error>>;
 
-        async fn query<'a>(
+        async fn query(
             &mut self,
             query: &str,
-            bind_variables: Option<&'a [DataType]>,
+            bind_variables: Option<Arc<[DataType]>>,
+            fetch_more: Box<dyn Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send>,
         ) -> Result<DataRows, Box<dyn std::error::Error>>;
 
         fn mutate<'a>(
