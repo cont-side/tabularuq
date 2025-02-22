@@ -103,7 +103,7 @@ impl QueryHandler for SqlServerHandler {
     async fn mutate(
         &mut self,
         query: &str,
-        bind_variables: Option<&[DataType]>,
+        bind_variables: Option<Arc<[DataType]>>,
     ) -> Result<impl QueryResult, Box<dyn std::error::Error>> {
         let client = self
             .client
@@ -112,7 +112,7 @@ impl QueryHandler for SqlServerHandler {
 
         let mut mutate = Query::new(query);
         if let Some(bind_vars) = bind_variables {
-            for bind_var in bind_vars {
+            for bind_var in bind_vars.iter() {
                 SqlServerHandler::bind_query(&mut mutate, bind_var);
             }
         }

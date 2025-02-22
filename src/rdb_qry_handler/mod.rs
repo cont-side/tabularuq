@@ -84,7 +84,7 @@ pub trait QueryHandler {
     fn mutate(
         &mut self,
         query: &str,
-        bind_variables: Option<&[DataType]>,
+        bind_variables: Option<Arc<[DataType]>>,
     ) -> impl Future<Output = Result<impl QueryResult, Box<dyn std::error::Error>>> + Send;
 
     fn close(self) -> impl Future<Output = Result<(), Box<dyn std::error::Error>>> + Send;
