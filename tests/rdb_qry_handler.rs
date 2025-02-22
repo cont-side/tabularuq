@@ -24,15 +24,15 @@ async fn mock_connect_test() {
 #[tokio::test]
 async fn mock_query_test() {
     let mut handler_ok_mock = MockQueryHandlerMock::new();
-    handler_ok_mock.expect_query().returning(|_, _| Ok(DataRows::new(None, Vec::new())));
-    let ok_result = handler_ok_mock.query("SELECT * FROM table", None).await;
+    handler_ok_mock.expect_query().returning(|_, _, _| Ok(DataRows::new(None, Vec::new())));
+    let ok_result = handler_ok_mock.query("SELECT * FROM table", None, Box::new(|_, _| true)).await;
     assert!(ok_result.is_ok());
 
     let mut handler_err_mock = MockQueryHandlerMock::new();
     handler_err_mock
         .expect_query()
-        .returning(|_, _| Err(Box::new(QueryHandleError::Unknown("Unknown".to_string()))));
-    let err_result = handler_err_mock.query("SELECT * FROM table", None).await;
+        .returning(|_, _, _| Err(Box::new(QueryHandleError::Unknown("Unknown".to_string()))));
+    let err_result = handler_err_mock.query("SELECT * FROM table", None, Box::new(|_, _| true)).await;
     let err = err_result.unwrap_err();
     assert_eq!(
         *err.downcast::<QueryHandleError>().unwrap(),

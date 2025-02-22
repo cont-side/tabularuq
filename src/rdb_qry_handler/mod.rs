@@ -1,6 +1,6 @@
 use chrono::DateTime;
 use serde::Deserialize;
-use std::{fs::read_to_string, future::Future, path::Path};
+use std::{fs::read_to_string, future::Future, path::Path, sync::Arc};
 
 pub mod error;
 pub mod sqlserver;
@@ -74,25 +74,23 @@ pub trait QueryHandler {
 
     fn connect(&mut self) -> impl Future<Output = Result<(), Box<dyn std::error::Error>>> + Send;
 
-    fn query<F>(
+    fn query(
         &mut self,
         query: &str,
-        bind_variables: Option<&[DataType]>,
-        fetch_more: F,
-    ) -> impl Future<Output = Result<DataRows, Box<dyn std::error::Error>>> + Send
-    where
-        F: Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send;
+        bind_variables: Option<Arc<[DataType]>>,
+        fetch_more: Box<dyn Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send>,
+    ) -> impl Future<Output = Result<DataRows, Box<dyn std::error::Error>>> + Send;
 
     fn mutate(
         &mut self,
         query: &str,
-        bind_variables: Option<&[DataType]>,
+        bind_variables: Option<Arc<[DataType]>>,
     ) -> impl Future<Output = Result<impl QueryResult, Box<dyn std::error::Error>>> + Send;
 
     fn close(self) -> impl Future<Output = Result<(), Box<dyn std::error::Error>>> + Send;
 
-    fn default_fetch_more() -> impl Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send {
-        |_, _| true
+    fn default_fetch_more() -> Box<dyn Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send> {
+        Box::new(|_, _| true)
     }
 }
 

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use chrono::{DateTime, Duration};
 use futures::stream::TryStreamExt;
 use serde::Deserialize;
@@ -56,15 +58,12 @@ impl QueryHandler for SqlServerHandler {
         Result::Ok(())
     }
 
-    async fn query<F>(
+    async fn query(
         &mut self,
         query: &str,
-        bind_variables: Option<&[DataType]>,
-        fetch_more: F,
-    ) -> Result<DataRows, Box<dyn std::error::Error>>
-    where
-        F: Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send,
-    {
+        bind_variables: Option<Arc<[DataType]>>,
+        fetch_more: Box<dyn Fn(Option<&[String]>, Option<&DataRecord>) -> bool + Send>,
+    ) -> Result<DataRows, Box<dyn std::error::Error>> {
         let client = self
             .client
             .as_mut()
@@ -72,7 +71,7 @@ impl QueryHandler for SqlServerHandler {
 
         let mut select = Query::new(query);
         if let Some(bind_vars) = bind_variables {
-            for bind_var in bind_vars {
+            for bind_var in bind_vars.iter() {
                 SqlServerHandler::bind_query(&mut select, bind_var);
             }
         }
@@ -104,7 +103,7 @@ impl QueryHandler for SqlServerHandler {
     async fn mutate(
         &mut self,
         query: &str,
-        bind_variables: Option<&[DataType]>,
+        bind_variables: Option<Arc<[DataType]>>,
     ) -> Result<impl QueryResult, Box<dyn std::error::Error>> {
         let client = self
             .client
@@ -113,7 +112,7 @@ impl QueryHandler for SqlServerHandler {
 
         let mut mutate = Query::new(query);
         if let Some(bind_vars) = bind_variables {
-            for bind_var in bind_vars {
+            for bind_var in bind_vars.iter() {
                 SqlServerHandler::bind_query(&mut mutate, bind_var);
             }
         }
