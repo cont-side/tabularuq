@@ -1,4 +1,5 @@
-use calamine::{open_workbook, Data, DataType, Range, Reader, Rows, Xlsx};
+use calamine::{open_workbook, Data, Range, Reader, Rows, Xlsx};
+use chrono::NaiveDateTime;
 use std::{fs::File, io::BufReader};
 
 use super::{error::TabularPortError, TabularCursor, TabularPorter, TabularStringRecord};
@@ -46,9 +47,23 @@ impl Iterator for XlsxRecordCursor<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         let row = self.row.next();
         match row {
-            Some(data) => {
-                Some(data.iter().map(|val| val.as_string().unwrap_or("".to_string())).collect())
-            }
+            Some(data) => Some(
+                data.iter()
+                    .map(|val| match val {
+                        Data::Int(i) => i.to_string(),
+                        Data::Float(f) => f.to_string(),
+                        Data::String(s) => s.to_string(),
+                        Data::Bool(b) => b.to_string(),
+                        Data::DateTime(dt) => {
+                            dt.as_datetime().unwrap_or(NaiveDateTime::default()).to_string()
+                        }
+                        Data::DateTimeIso(dt) => dt.to_string(),
+                        Data::DurationIso(d) => d.to_string(),
+                        Data::Error(e) => e.to_string(),
+                        Data::Empty => "".to_string(),
+                    })
+                    .collect(),
+            ),
             _ => None,
         }
     }
