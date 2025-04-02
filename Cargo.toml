@@ -1,21 +1,38 @@
 [package]
 name = "tabularuq"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-tokio-util = { version = "0.7", features = ["codec", "compat"] }
-tiberius = { version = "^0.12", features = ["native-tls", "chrono"] }
+tokio = { version = "1", features = [
+    "full"
+] }
+tokio-util = { version = "0.7", features = [
+    "codec",
+    "compat"
+] }
+tiberius = { version = "^0.12", features = [
+    "native-tls",
+    "chrono"
+] }
 toml = "0.8.19"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", features = [
+    "derive"
+] }
 futures = "0.3"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4", features = [
+    "serde"
+] }
 csv = "1.1.6"
-calamine = { version = "0.26.1", features = ["dates"] }
+calamine = { version = "0.26.1", features = [
+    "dates"
+] }
 
 [dev-dependencies]
 mockall = "0.13.1"
 
 [lib]
-crate-type = ["rlib", "dylib"]
+crate-type = [
+    "rlib",
+    "dylib"
+]
