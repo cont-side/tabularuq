@@ -95,11 +95,19 @@ pub trait QueryHandler {
 }
 
 #[derive(Deserialize)]
-struct DataSourceInform {
+pub struct DataSourceInform {
     driver: String,
     sqlserver: Option<sqlserver::SqlServerConnectionConfig>,
 }
 
+impl DataSourceInform {
+    pub fn new(driver: String, sqlserver: Option<sqlserver::SqlServerConnectionConfig>) -> Self {
+        DataSourceInform { driver, sqlserver }
+    }
+}
+
+//TODO: deprecated
+#[allow(dead_code)]
 pub fn qry_handler<P>(config_file: P) -> Option<impl QueryHandler>
 where
     P: AsRef<Path>,
@@ -113,6 +121,22 @@ where
     match driver {
         "sqlserver" => {
             let conn_config = connection_config.sqlserver?;
+            let handler = sqlserver::SqlServerHandler::from_config(conn_config).ok()?;
+            Some(handler)
+        }
+        _ => {
+            println!("Not supported driver");
+            None
+        }
+    }
+}
+
+pub fn qry_handler_from_dsi(inform: DataSourceInform) -> Option<impl QueryHandler> {
+    let driver = inform.driver.as_str();
+
+    match driver {
+        "sqlserver" => {
+            let conn_config = inform.sqlserver?;
             let handler = sqlserver::SqlServerHandler::from_config(conn_config).ok()?;
             Some(handler)
         }

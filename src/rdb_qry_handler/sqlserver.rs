@@ -141,6 +141,19 @@ pub struct SqlServerConnectionConfig {
     password: String,
 }
 
+impl SqlServerConnectionConfig {
+    pub fn new(
+        ado_string: Option<String>,
+        host: String,
+        port: Option<u16>,
+        database: String,
+        username: String,
+        password: String,
+    ) -> Self {
+        SqlServerConnectionConfig { ado_string, host, port, database, username, password }
+    }
+}
+
 impl SqlServerHandler {
     fn create_config(
         conn_config: &SqlServerConnectionConfig,
