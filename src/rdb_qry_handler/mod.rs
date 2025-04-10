@@ -39,6 +39,10 @@ impl DataRecord {
     pub fn cells(&self) -> &[Option<DataType>] {
         &self.cells
     }
+
+    pub fn get_cell(&self, index: usize) -> Option<&DataType> {
+        self.cells.get(index).and_then(|cell| cell.as_ref())
+    }
 }
 
 #[derive(Debug)]
