@@ -1,5 +1,6 @@
 use mockall::mock;
 use std::{future::Future, sync::Arc};
+use tabularuq::rdb_qry_handler::datatype::DataType;
 use tabularuq::rdb_qry_handler::*;
 
 mock! {
