@@ -1,4 +1,4 @@
-use datatype::DataType;
+use datatype::{DataType, FromDataType};
 use serde::Deserialize;
 use std::{fs::read_to_string, future::Future, path::Path, sync::Arc};
 
@@ -20,8 +20,15 @@ impl DataRecord {
         &self.cells
     }
 
-    pub fn get_cell(&self, index: usize) -> Option<&DataType> {
+    pub fn cell(&self, index: usize) -> Option<&DataType> {
         self.cells.get(index).and_then(|cell| cell.as_ref())
+    }
+
+    pub fn cvalue<T>(&self, index: usize) -> Option<T>
+    where
+        T: FromDataType,
+    {
+        self.cell(index).and_then(|cell| cell.value::<T>())
     }
 }
 
