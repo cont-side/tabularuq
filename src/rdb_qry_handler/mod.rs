@@ -1,30 +1,10 @@
-use chrono::DateTime;
+use datatype::DataType;
 use serde::Deserialize;
 use std::{fs::read_to_string, future::Future, path::Path, sync::Arc};
 
+pub mod datatype;
 pub mod error;
 pub mod sqlserver;
-
-#[derive(Debug)]
-#[allow(dead_code)]
-pub enum DataType {
-    I8(i8),
-    I16(i16),
-    I32(i32),
-    I64(i64),
-    I128(i128),
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    U64(u64),
-    U128(u128),
-    F32(f32),
-    F64(f64),
-    Bool(bool),
-    String(String),
-    Bytes(Vec<u8>),
-    DateTime(DateTime<chrono::FixedOffset>),
-}
 
 #[derive(Debug)]
 pub struct DataRecord {
