@@ -3,7 +3,9 @@ use std::sync::Arc;
 use chrono::{DateTime, Duration};
 use futures::stream::TryStreamExt;
 use serde::Deserialize;
-use tiberius::{AuthMethod, Client, ColumnData, Config, Query, QueryItem, ResultMetadata, Row};
+use tiberius::{
+    AuthMethod, Client, ColumnData, Config, Query, QueryItem, ResultMetadata, Row, numeric::Numeric,
+};
 use tokio::net::TcpStream;
 use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 
@@ -186,6 +188,7 @@ impl SqlServerHandler {
             DataType::I16(val) => query.bind(val.to_owned()),
             DataType::I32(val) => query.bind(val.to_owned()),
             DataType::I64(val) => query.bind(val.to_owned()),
+            DataType::I128(val) => query.bind(Numeric::new_with_scale(*val, 0)),
             DataType::F32(val) => query.bind(val.to_owned()),
             DataType::F64(val) => query.bind(val.to_owned()),
             DataType::Bool(val) => query.bind(val.to_owned()),
@@ -229,7 +232,13 @@ impl SqlServerHandler {
             ColumnData::String(val) => val.map(|v| DataType::String(v.to_string())),
             ColumnData::Guid(val) => val.map(|v| DataType::String(v.to_string())),
             ColumnData::Binary(value) => value.map(|v| DataType::Bytes(v.to_vec())),
-            ColumnData::Numeric(val) => val.map(|v| DataType::I128(v.value())),
+            ColumnData::Numeric(val) => val.map(|v| {
+                if v.scale() == 0 {
+                    DataType::I128(i128::from(v))
+                } else {
+                    DataType::F64(f64::from(v))
+                }
+            }),
 
             ColumnData::DateTimeOffset(val) => val.map(|v| DataType::I16(v.offset())),
             ColumnData::DateTime(val) => val.map(|v| {
