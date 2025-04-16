@@ -1,5 +1,6 @@
 use chrono::DateTime;
 
+//NOTE: U128 can not be supported currently
 #[derive(Debug)]
 pub enum DataType {
     I8(i8),
@@ -11,7 +12,6 @@ pub enum DataType {
     U16(u16),
     U32(u32),
     U64(u64),
-    U128(u128),
     F32(f32),
     F64(f64),
     Bool(bool),
@@ -86,12 +86,6 @@ impl FromDataType for u32 {
 impl FromDataType for u64 {
     fn from_data_type(data_type: &DataType) -> Option<Self> {
         if let DataType::U64(value) = data_type { Some(*value) } else { None }
-    }
-}
-
-impl FromDataType for u128 {
-    fn from_data_type(data_type: &DataType) -> Option<Self> {
-        if let DataType::U128(value) = data_type { Some(*value) } else { None }
     }
 }
 
