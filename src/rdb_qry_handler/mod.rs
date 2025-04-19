@@ -47,6 +47,16 @@ impl DataRows {
         self.column_meta.as_deref()
     }
 
+    pub fn find_column_index(&self, name: &str) -> Option<usize> {
+        let meta_data = self.column_meta()?;
+        for (i, column_name) in meta_data.iter().enumerate() {
+            if column_name.to_lowercase().as_str() == name.to_lowercase().as_str() {
+                return Some(i);
+            }
+        }
+        None
+    }
+
     pub fn records(&self) -> &[DataRecord] {
         &self.records
     }
