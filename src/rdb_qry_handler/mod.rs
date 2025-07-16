@@ -95,7 +95,7 @@ pub trait QueryHandler {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct DataSourceInform {
     driver: String,
     sqlserver: Option<sqlserver::SqlServerConnectionConfig>,
