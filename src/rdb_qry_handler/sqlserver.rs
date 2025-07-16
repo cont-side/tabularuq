@@ -133,7 +133,7 @@ impl QueryHandler for SqlServerHandler {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct SqlServerConnectionConfig {
     ado_string: Option<String>,
     host: String,
